@@ -1,30 +1,72 @@
-;(function() {
-  var templates = {
-    form: '\
-      <form class="form-horizontal">{{fieldsets}}</form>\
-    ',
 
-    fieldset: '\
-      <fieldset>\
-        {{legend}}\
-        {{fields}}\
-      </fieldset>\
-    ',
+  /**
+   * Bootstrap 2 templates
+   */
+  Form.template = _.template('\
+    <form class="form-horizontal">\
+      <div data-fieldsets></div>\
+      <% if (submitButton) { %>\
+        <button type="submit" class="btn"><%= submitButton %></button>\
+      <% } %>\
+    </form>\
+  ');
 
-    field: '\
-      <div class="control-group">\
-        <label class="control-label" for="{{id}}">{{title}}</label>\
-        <div class="controls">\
-          <div class="input-xlarge">{{editor}}</div>\
-          <div class="help-block">{{help}}</div>\
-        </div>\
+
+  Form.Fieldset.template = _.template('\
+    <fieldset data-fields>\
+      <% if (legend) { %>\
+        <legend><%= legend %></legend>\
+      <% } %>\
+    </fieldset>\
+  ');
+
+
+  Form.Field.template = _.template('\
+    <div class="control-group field-<%= key %>">\
+      <label class="control-label" for="<%= editorId %>">\
+        <% if (titleHTML){ %><%= titleHTML %>\
+        <% } else { %><%- title %><% } %>\
+      </label>\
+      <div class="controls">\
+        <span data-editor></span>\
+        <div class="help-inline" data-error></div>\
+        <div class="help-block"><%= help %></div>\
       </div>\
-    '
-  };
-  
-  var classNames = {
-    error: 'error'
-  };
+    </div>\
+  ');
 
-  Backbone.Form.helpers.setTemplates(templates, classNames);
-})();
+
+  Form.NestedField.template = _.template('\
+    <div class="field-<%= key %>">\
+      <div title="<% if (titleHTML){ %><%= titleHTML %><% } else { %><%- title %><% } %>" class="input-xlarge">\
+        <span data-editor></span>\
+        <div class="help-inline" data-error></div>\
+      </div>\
+      <div class="help-block"><%= help %></div>\
+    </div>\
+  ');
+
+
+  if (Form.editors.List) {
+
+    Form.editors.List.template = _.template('\
+      <div class="bbf-list">\
+        <ul class="unstyled clearfix" data-items></ul>\
+        <button type="button" class="btn bbf-add" data-action="add">Add</button>\
+      </div>\
+    ');
+
+
+    Form.editors.List.Item.template = _.template('\
+      <li class="clearfix">\
+        <div class="pull-left" data-editor></div>\
+        <button type="button" class="btn bbf-del" data-action="remove">&times;</button>\
+      </li>\
+    ');
+    
+
+    Form.editors.List.Object.template = Form.editors.List.NestedModel.template = _.template('\
+      <div class="bbf-list-modal"><%= summary %></div>\
+    ');
+
+  }

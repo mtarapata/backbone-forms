@@ -1,3 +1,7 @@
+;(function(Form, Field, editors) {
+
+
+
 module('keyToTitle');
 
 test('Transforms camelCased string to words', function() {
@@ -11,17 +15,35 @@ test('Transforms camelCased string to words', function() {
 
 ;(function() {
   
-  module('createTemplate');
+  module('createTemplate', {
+      setup: function() {
+        this._compileTemplate = Form.helpers.compileTemplate;
+      },
+
+      teardown: function() {
+        Form.setTemplateCompiler(this._compileTemplate);
+      }
+  });
   
   var createTemplate = Form.helpers.createTemplate;
 
   test('returns a compiled template if just passed a string', function() {
     var template = createTemplate('Hello {{firstName}} {{lastName}}.');
     
-    var result = template({ firstName: 'John', lastName: 'Smith' })
+    var result = template({ firstName: 'John', lastName: 'Smith' });
     
-    equal(result, 'Hello John Smith.')
-  })
+    equal(result, 'Hello John Smith.');
+  });
+
+  test('returns a template compiled with a different templating program, when just passed a string - e.g. Handlebars', function() {
+    Form.setTemplateCompiler(Handlebars.compile);
+
+    var template = createTemplate('Hello {{#with person}}{{firstName}} {{lastName}}{{/with}}.');
+
+    var result = template({ person: { firstName: 'John', lastName: 'Smith' } });
+
+    equal(result, 'Hello John Smith.');
+  });
 
   test('works when underscore template settings are different and restores them when done', function() {
     var originalSetting = /\[\[(.+?)\]\]/g;
@@ -29,12 +51,12 @@ test('Transforms camelCased string to words', function() {
     
     var template = createTemplate('Bye {{firstName}} {{lastName}}!');
     
-    var result = template({ firstName: 'John', lastName: 'Smith' })
+    var result = template({ firstName: 'John', lastName: 'Smith' });
     
-    equal(result, 'Bye John Smith!')
+    equal(result, 'Bye John Smith!');
     
-    equal(_.templateSettings.interpolate, originalSetting)
-  })
+    equal(_.templateSettings.interpolate, originalSetting);
+  });
 
   test('returns the supplanted string if a context is passed', function() {
     var result = createTemplate('Hello {{firstName}} {{lastName}}.', {
@@ -42,8 +64,8 @@ test('Transforms camelCased string to words', function() {
       lastName: 'Smith'
     });
     
-    equal(result, 'Hello John Smith.')
-  })
+    equal(result, 'Hello John Smith.');
+  });
   
 })();
 
@@ -54,7 +76,7 @@ test('Transforms camelCased string to words', function() {
   module('setTemplates', {
     setup: function() {
       this._templates = Form.templates;
-      this._classNames = Form.classNames;
+      this._classNames = _.clone(Form.classNames);
       this._createTemplate = Form.helpers.createTemplate;
     },
     
@@ -164,65 +186,6 @@ module('createEditor');
 
 
 
-module('triggerCancellableEvent');
-
-(function() {
-    
-    var trigger = Form.helpers.triggerCancellableEvent;
-    
-    test('Passes through arguments', function() {
-        expect(2);
-        
-        var view = new Backbone.View();
-
-        view.bind('add', function(arg1, arg2, next) {
-            equal(arg1, 'foo');
-            equal(arg2, 'bar');
-        });
-
-        trigger(view, 'add', ['foo', 'bar']);
-    });
-    
-    test('Default action runs if next is called', function() {
-        expect(1);
-        
-        var view = new Backbone.View();
-        
-        view.bind('remove', function(next) {
-            next();
-        });
-        
-        trigger(view, 'remove', [], function() {
-            ok(true);
-        });
-    });
-
-    test('Default action doesnt run if next is not called', function() {
-        var view = new Backbone.View();
-        
-        view.bind('edit', function(next) {
-            //Don't continue
-        });
-        
-        trigger(view, 'edit', [], function() {
-            ok(false); //Shouldn't run
-        });
-    });
-    
-    test('Default action run without anything bound', function() {
-        expect(1);
-
-        var view = new Backbone.View();
-
-        trigger(view, 'remove', [], function() {
-            ok(true);
-        });
-    });
-
-})();
-
-
-
 (function() {
   
   module('getValidator');
@@ -289,3 +252,6 @@ module('triggerCancellableEvent');
 
 })();
 
+
+
+})(Backbone.Form, Backbone.Form.Field, Backbone.Form.editors);
